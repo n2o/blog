@@ -2,12 +2,14 @@
   "Blogengine, based on https://www.alexandercarls.de/markdoc-nbb-clojure/"
   (:require ["@markdoc/markdoc$default" :as markdoc]
             ["path" :as path]
+            ["react$default" :as React]
             ["zx" :refer [glob fs]]
             [applied-science.js-interop :as j]
             [clojure.edn :as edn]
             [clojure.string :as str]
             [nbb.core :refer [slurp await]]
-            [promesa.core :as p]))
+            [promesa.core :as p]
+            [reagent.dom.server :as srv]))
 
 (def dist-folder "dist")
 (def template (fs.readFileSync "template.html" "utf8"))
@@ -20,21 +22,30 @@
   (when-let [frontmatter (j/get-in ast [:attributes :frontmatter])]
     (edn/read-string frontmatter)))
 
-(defn markdown-to-html [markdown]
+(defn markdown-to-react-elements [markdown]
   (let [ast (markdoc/parse markdown)
         frontmatter (parse-frontmatter ast)
         rendertree (markdoc/transform ast (clj->js {:variables frontmatter :functions {:toHumanDate md-to-human-date}}))
-        html (markdoc/renderers.html rendertree)]
-    [html frontmatter]))
+        react-elements (markdoc/renderers.react rendertree React)]
+    [react-elements frontmatter]))
 
 (defn make-templated-html [title content]
   (-> template
       (str/replace "{{ TITLE }}" title)
       (str/replace "{{ CONTENT }}" content)))
 
+(defn post-layout [date content]
+  [:article.relative.pt-8.mt-6
+   [:div.text-sm.leading-6
+    [:dl
+     [:dd.absolute.top-0.inset-x-0.text-slate-700
+      [:time {:date-time (.toISOString date)} (date->human date)]]]]
+   [:div.prose.prose-slate.max-w-none content]])
+
 (defn process-post-path [post-path]
   (p/let [post (slurp post-path)
-          [post-html frontmatter] (markdown-to-html post)
+          [post-react-element frontmatter] (markdown-to-react-elements post)
+          post-html (srv/render-to-static-markup (post-layout (:published-at frontmatter) post-react-element))
           templated-html (make-templated-html (:title frontmatter) post-html)
           slug (-> (path/dirname post-path)
                    (path/basename))]
