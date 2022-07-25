@@ -48,7 +48,7 @@
                   (r/as-element [:div.relative>pre.grid {:class [class] :style style}
                                  (map-indexed (fn [il line]
                                                 [:div
-                                                 (update-in (js->clj (get-line-props #js {:line line :key il}) :keywordize-keys true) [:class] conj (when (line-highlighted? (inc il)) "-mx-4 px-[0.7rem] border-l-4 border-yellow-400 bg-yellow-300/[0.25]"))
+                                                 (update (js->clj (get-line-props #js {:line line :key il}) :keywordize-keys true) :class conj (when (line-highlighted? (inc il)) "-mx-4 px-[0.7rem] border-l-4 border-yellow-400 bg-yellow-300/[0.25]"))
                                                  (map-indexed (fn [it token] [:span (js->clj (get-token-props (clj->js {:token token :key it})) :keywordize-keys true)])
                                                               line)]) tokens)
                                  [:div.absolute.top-0.right-0.rounded-b-lg.bg-gray-600.text-xs.text-slate-200.p-2.mr-2.font-mono
