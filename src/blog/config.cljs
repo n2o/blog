@@ -1,3 +1,3 @@
 (ns blog.config)
 
-(def site-url "blog.meter.ninja")
+(def site-url "https://blog.meter.ninja/")
