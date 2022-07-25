@@ -1,4 +1,4 @@
-(ns build
+(ns blog.core
   "Blogengine, based on https://www.alexandercarls.de/markdoc-nbb-clojure/"
   (:require ["@markdoc/markdoc$default" :as markdoc :refer [Tag]]
             ["@sindresorhus/slugify$default" :as slugify]
