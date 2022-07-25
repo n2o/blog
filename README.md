@@ -1,5 +1,10 @@
 # blog
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fn2o%2Fblog)
+
+Build a blog using "Clojure on node.js" [`nbb`](https://github.com/babashka/nbb),
+with reactjs for your components. Generates static HTML files.
+
 ## Development
 
 This project requires [`nbb`](https://github.com/babashka/nbb) for interactive
@@ -23,4 +28,3 @@ Start tailwindcss:
 This build produces the HTML-files and generates then the CSS from the output:
 
     yarn build
-
