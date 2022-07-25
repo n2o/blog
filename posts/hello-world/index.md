@@ -7,8 +7,6 @@
 
 # {% $title %}
 
-Published at {% toHumanDate($published-at) %}{% .published-at %}
-
 MarkDoc is a superset of the [CommonMark Specification](https://commonmark.org).
 This document is a playground for testing our implementation.
 

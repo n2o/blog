@@ -22,8 +22,6 @@
 (defn date->human [date]
   (.toLocaleDateString date "de-DE" #js {:year "numeric" :month "long" :day "numeric"}))
 
-(def md-to-human-date {:transform (fn [parameters] (date->human (j/get parameters 0)))})
-
 ;; -----------------------------------------------------------------------------
 ;; Highlight Code
 
@@ -130,7 +128,6 @@
   (let [ast (markdoc/parse markdown)
         frontmatter (parse-frontmatter ast)
         rendertree (markdoc/transform ast (clj->js {:variables frontmatter
-                                                    :functions {:toHumanDate md-to-human-date}
                                                     :nodes {:heading node-heading
                                                             :fence node-fence}}))
         react-elements (markdoc/renderers.react
