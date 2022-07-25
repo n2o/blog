@@ -1,6 +1,7 @@
 (ns build
   "Blogengine, based on https://www.alexandercarls.de/markdoc-nbb-clojure/"
-  (:require ["@markdoc/markdoc$default" :as markdoc]
+  (:require ["@markdoc/markdoc$default" :as markdoc :refer [Tag]]
+            ["@sindresorhus/slugify$default" :as slugify]
             ["path" :as path]
             ["react$default" :as React]
             ["zx" :refer [glob fs]]
@@ -9,10 +10,36 @@
             [clojure.string :as str]
             [nbb.core :refer [slurp await]]
             [promesa.core :as p]
+            [reagent.core :as r]
             [reagent.dom.server :as srv]))
 
 (def dist-folder "dist")
 (def template (fs.readFileSync "template.html" "utf8"))
+
+;; -----------------------------------------------------------------------------
+
+(defn Heading [{:keys [id level children]}]
+  (let [heading-tag
+        (if (= level 1)
+          [:h1.not-prose.text-2xl.font-extrabold.tracking-tight.text-slate-900.md:text-3xl {:id id} children]
+          [(keyword (str "h" level)) {:id id :class "text-lg md:text-2xl"} children])]
+    [:a.no-underline.relative {:href (str "#" id)} heading-tag]))
+
+(def node-heading
+  {:render "Heading"
+   :children ["inline"]
+   :attributes {:id {:type 'String}
+                :level {:type 'Number :required true :default 1}}
+   :transform (fn [node config]
+                (let [attributes (.transformAttributes node config)
+                      children (.transformChildren node config)
+                      id (slugify (first children))]
+                  (Tag.
+                   "Heading"
+                   (clj->js (into (js->clj attributes) {:id id}))
+                   children)))})
+
+;; -----------------------------------------------------------------------------
 
 (defn date->human [date]
   (.toLocaleDateString date "en-US" #js {:year "numeric" :month "long" :day "numeric"}))
@@ -25,8 +52,13 @@
 (defn markdown-to-react-elements [markdown]
   (let [ast (markdoc/parse markdown)
         frontmatter (parse-frontmatter ast)
-        rendertree (markdoc/transform ast (clj->js {:variables frontmatter :functions {:toHumanDate md-to-human-date}}))
-        react-elements (markdoc/renderers.react rendertree React)]
+        rendertree (markdoc/transform ast (clj->js {:variables frontmatter
+                                                    :functions {:toHumanDate md-to-human-date}
+                                                    :nodes {:heading node-heading}}))
+        react-elements (markdoc/renderers.react
+                        rendertree
+                        React
+                        (clj->js {:components {"Heading" (r/reactify-component Heading)}}))]
     [react-elements frontmatter]))
 
 (defn make-templated-html [title content]
