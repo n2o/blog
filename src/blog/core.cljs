@@ -8,6 +8,7 @@
             ["react$default" :as React]
             ["zx" :refer [fs glob]]
             [applied-science.js-interop :as j]
+            [blog.rss :as rss]
             [clojure.edn :as edn]
             [clojure.string :as str]
             [nbb.core :refer [slurp]]
@@ -15,7 +16,6 @@
             [reagent.core :as r]
             [reagent.dom.server :as srv]))
 
-(def site-url "https://blog.meter.ninja/")
 (def dist-folder "public")
 (def template (fs.readFileSync "template.html" "utf8"))
 
@@ -59,26 +59,6 @@
                  :attributes {:content {:type 'String}
                               :highlight {:type 'String}
                               :language {:type 'String}}})
-
-;; -----------------------------------------------------------------------------
-;; RSS Feed
-
-(defn build-rss-feed [posts]
-  (str "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>
-        <rss version=\"2.0\" xmlns:atom=\"http://www.w3.org/2005/Atom\">
-         <channel>
-          <title>Christian Meter</title>
-          <description>Blog</description>
-          <link>" site-url "</link>
-       <atom:link href=\"" site-url "rss.xml\" rel=\"self\" type=\"application/rss+xml\" />"
-       (apply str (map #(str "<item>
-            <guid>" site-url (:slug %) "</guid>
-            <title>" (get-in % [:frontmatter :title]) "</title>
-            <link>" site-url (:slug %) "</link>
-            <pubDate>" (.toUTCString (get-in % [:frontmatter :published-at])) "</pubDate>
-          </item>") posts))
-       "</channel>
-</rss>"))
 
 ;; -----------------------------------------------------------------------------
 ;; Build Index Page
@@ -182,6 +162,6 @@
           index-page (srv/render-to-static-markup index-page)
           index-page (make-templated-html "Christian Meter" index-page)]
     (fs.writeFile (path/join dist-folder "index.html") index-page)
-    (fs.writeFile (path/join dist-folder "rss.xml") (build-rss-feed posts))))
+    (fs.writeFile (path/join dist-folder "rss.xml") (rss/build-rss-feed posts))))
 
 #js {:build build}
