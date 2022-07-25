@@ -3,6 +3,8 @@
   (:require ["@markdoc/markdoc$default" :as markdoc]
             ["path" :as path]
             ["zx" :refer [glob fs]]
+            [applied-science.js-interop :as j]
+            [clojure.edn :as edn]
             [clojure.string :as str]
             [nbb.core :refer [slurp await]]
             [promesa.core :as p]))
@@ -10,11 +12,20 @@
 (def dist-folder "dist")
 (def template (fs.readFileSync "template.html" "utf8"))
 
+(defn date->human [date]
+  (.toLocaleDateString date "en-US" #js {:year "numeric" :month "long" :day "numeric"}))
+(def md-to-human-date {:transform (fn [parameters] (date->human (j/get parameters 0)))})
+
+(defn parse-frontmatter [ast]
+  (when-let [frontmatter (j/get-in ast [:attributes :frontmatter])]
+    (edn/read-string frontmatter)))
+
 (defn markdown-to-html [markdown]
-  (-> markdown
-      markdoc/parse
-      markdoc/transform
-      markdoc/renderers.html))
+  (let [ast (markdoc/parse markdown)
+        frontmatter (parse-frontmatter ast)
+        rendertree (markdoc/transform ast (clj->js {:variables frontmatter :functions {:toHumanDate md-to-human-date}}))
+        html (markdoc/renderers.html rendertree)]
+    [html frontmatter]))
 
 (defn make-templated-html [title content]
   (-> template
@@ -23,8 +34,8 @@
 
 (defn process-post-path [post-path]
   (p/let [post (slurp post-path)
-          post-html (markdown-to-html post)
-          templated-html (make-templated-html "TODO" post-html)
+          [post-html frontmatter] (markdown-to-html post)
+          templated-html (make-templated-html (:title frontmatter) post-html)
           slug (-> (path/dirname post-path)
                    (path/basename))]
     {:path post-path
