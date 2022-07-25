@@ -7,6 +7,4 @@
 
 # {% $title %}
 
-Published at {% toHumanDate($published-at) %}{% .published-at %}
-
 Zweiter Post
