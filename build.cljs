@@ -6,14 +6,15 @@
             ["prism-react-renderer$default" :refer [Prism]]
             ["prism-react-renderer$default.default" :as Highlight]
             ["react$default" :as React]
-            ["zx" :refer [glob fs]]
+            ["zx" :refer [fs glob]]
             [applied-science.js-interop :as j]
             [clojure.edn :as edn]
             [clojure.string :as str]
-            [nbb.core :refer [slurp await]]
+            [nbb.core :refer [await slurp]]
             [promesa.core :as p]
             [reagent.core :as r]
-            [reagent.dom.server :as srv]))
+            [reagent.dom.server :as srv]
+            rss))
 
 (def dist-folder "dist")
 (def template (fs.readFileSync "template.html" "utf8"))
@@ -130,7 +131,9 @@
     [:dl
      [:dd.absolute.top-0.inset-x-0.text-slate-700
       [:time {:date-time (.toISOString date)} (date->human date)]]]]
-   [:div.prose.prose-slate.max-w-none content]])
+   [:div.prose.prose-slate.max-w-none content]
+   [:script {:src "https://utteranc.es/client.js" :repo "n2o/blog" "issue-term" "pathname" :theme "github-light" :cross-origin "anonymous" :async true}]])
+
 
 (defn process-post-path [post-path]
   (p/let [post (slurp post-path)
@@ -161,7 +164,8 @@
           index-page (build-index-page posts)
           index-page (srv/render-to-static-markup index-page)
           index-page (make-templated-html "Christian Meter" index-page)]
-    (fs.writeFile (path/join dist-folder "index.html") index-page)))
+    (fs.writeFile (path/join dist-folder "index.html") index-page)
+    (fs.writeFile (path/join dist-folder "rss.xml") (rss/build-rss-feed posts))))
 
 (await (build))
 
