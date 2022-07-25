@@ -1,4 +1,4 @@
-(ns build
+(ns blog.core
   "Blogengine, based on https://www.alexandercarls.de/markdoc-nbb-clojure/"
   (:require ["@markdoc/markdoc$default" :as markdoc :refer [Tag]]
             ["@sindresorhus/slugify$default" :as slugify]
@@ -8,6 +8,7 @@
             ["react$default" :as React]
             ["zx" :refer [fs glob]]
             [applied-science.js-interop :as j]
+            [blog.rss :as rss]
             [clojure.edn :as edn]
             [clojure.string :as str]
             [nbb.core :refer [slurp]]
@@ -15,7 +16,6 @@
             [reagent.core :as r]
             [reagent.dom.server :as srv]))
 
-(def site-url "https://blog.meter.ninja/")
 (def dist-folder "public")
 (def template (fs.readFileSync "template.html" "utf8"))
 
@@ -48,7 +48,7 @@
                   (r/as-element [:div.relative>pre.grid {:class [class] :style style}
                                  (map-indexed (fn [il line]
                                                 [:div
-                                                 (update-in (js->clj (get-line-props #js {:line line :key il}) :keywordize-keys true) [:class] conj (when (line-highlighted? (inc il)) "-mx-4 px-[0.7rem] border-l-4 border-yellow-400 bg-yellow-300/[0.25]"))
+                                                 (update (js->clj (get-line-props #js {:line line :key il}) :keywordize-keys true) :class conj (when (line-highlighted? (inc il)) "-mx-4 px-[0.7rem] border-l-4 border-yellow-400 bg-yellow-300/[0.25]"))
                                                  (map-indexed (fn [it token] [:span (js->clj (get-token-props (clj->js {:token token :key it})) :keywordize-keys true)])
                                                               line)]) tokens)
                                  [:div.absolute.top-0.right-0.rounded-b-lg.bg-gray-600.text-xs.text-slate-200.p-2.mr-2.font-mono
@@ -59,26 +59,6 @@
                  :attributes {:content {:type 'String}
                               :highlight {:type 'String}
                               :language {:type 'String}}})
-
-;; -----------------------------------------------------------------------------
-;; RSS Feed
-
-(defn build-rss-feed [posts]
-  (str "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>
-        <rss version=\"2.0\" xmlns:atom=\"http://www.w3.org/2005/Atom\">
-         <channel>
-          <title>Christian Meter</title>
-          <description>Blog</description>
-          <link>" site-url "</link>
-       <atom:link href=\"" site-url "rss.xml\" rel=\"self\" type=\"application/rss+xml\" />"
-       (apply str (map #(str "<item>
-            <guid>" site-url (:slug %) "</guid>
-            <title>" (get-in % [:frontmatter :title]) "</title>
-            <link>" site-url (:slug %) "</link>
-            <pubDate>" (.toUTCString (get-in % [:frontmatter :published-at])) "</pubDate>
-          </item>") posts))
-       "</channel>
-</rss>"))
 
 ;; -----------------------------------------------------------------------------
 ;; Build Index Page
@@ -182,6 +162,6 @@
           index-page (srv/render-to-static-markup index-page)
           index-page (make-templated-html "Christian Meter" index-page)]
     (fs.writeFile (path/join dist-folder "index.html") index-page)
-    (fs.writeFile (path/join dist-folder "rss.xml") (build-rss-feed posts))))
+    (fs.writeFile (path/join dist-folder "rss.xml") (rss/build-rss-feed posts))))
 
 #js {:build build}
