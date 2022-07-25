@@ -3,9 +3,8 @@
     "build": "yarn blog:js && yarn tailwind:production",
     "tailwind:watch": "npx tailwindcss -i ./base.css -o ./public/css/output.css --watch",
     "tailwind:production": "npx tailwindcss -i ./base.css -o ./public/css/output.css --minify",
-    "blog:js": "node build.js"
+    "blog:js": "node build.mjs"
   },
-  "type": "module",
   "devDependencies": {
     "@markdoc/markdoc": "^0.1.4",
     "@sindresorhus/slugify": "^2.1.0",
