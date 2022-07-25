@@ -18,6 +18,11 @@
 (def dist-folder "dist")
 (def template (fs.readFileSync "template.html" "utf8"))
 
+(defn date->human [date]
+  (.toLocaleDateString date "en-US" #js {:year "numeric" :month "long" :day "numeric"}))
+
+(def md-to-human-date {:transform (fn [parameters] (date->human (j/get parameters 0)))})
+
 ;; -----------------------------------------------------------------------------
 ;; Highlight Code
 
@@ -57,6 +62,21 @@
                               :language {:type 'String}}})
 
 ;; -----------------------------------------------------------------------------
+;; Build Index Page
+
+(defn build-index-page [data]
+  [:ul.mt-3
+   (for [{:keys [frontmatter slug]} data]
+     [:li.mt-5 {:key slug}
+      [:div.mt-5
+       [:a.focus:outline-none {:href slug}
+        [:p.font-medium.text-gray-900.truncate
+         (:title frontmatter)]
+        [:time.flex-shrink-0.whitespace-nowrap.text-xs.text-gray-500
+         {:date-time (.toISOString (:published-at frontmatter))}
+         (date->human (:published-at frontmatter))]]]])])
+
+;; -----------------------------------------------------------------------------
 
 (defn Heading [{:keys [id level children]}]
   (let [heading-tag
@@ -80,10 +100,6 @@
                    children)))})
 
 ;; -----------------------------------------------------------------------------
-
-(defn date->human [date]
-  (.toLocaleDateString date "en-US" #js {:year "numeric" :month "long" :day "numeric"}))
-(def md-to-human-date {:transform (fn [parameters] (date->human (j/get parameters 0)))})
 
 (defn parse-frontmatter [ast]
   (when-let [frontmatter (j/get-in ast [:attributes :frontmatter])]
@@ -125,21 +141,29 @@
                    (path/basename))]
     {:path post-path
      :slug slug
+     :frontmatter frontmatter
      :html templated-html}))
 
 (defn build []
   (fs.emptyDir dist-folder)
-  (p/let [posts (js->clj (glob "posts/**/*.md"))
+  (p/let [posts (glob "posts/**/*.md")
+          posts (js->clj posts)
           posts (p/all (map process-post-path posts))
-          _ (p/all (map (fn [p] (let [post-path (:path p)
-                                      destfolder (path/join dist-folder (:slug p))]
-                                  (p/do
-                                    (fs.emptyDir destfolder)
-                                    (fs.copy (path/dirname post-path) destfolder)
-                                    (fs.remove (path/join destfolder "index.md"))
-                                    (fs.writeFile (path/join destfolder "index.html") (:html p)))))
-                        posts))]
-    posts))
+          posts (sort-by #(- (:published-at (:frontmatter %))) posts)
+          _ (p/all
+             (map (fn [p] (let [post-path (:path p)
+                                destfolder (path/join dist-folder (:slug p))]
+                            (p/do
+                              (fs.emptyDir destfolder)
+                              (fs.copy (path/dirname post-path) destfolder)
+                              (fs.remove (path/join destfolder "index.md"))
+                              (fs.writeFile (path/join destfolder "index.html") (:html p))))) posts))
+          index-page (build-index-page posts)
+          index-page (srv/render-to-static-markup index-page)
+          index-page (make-templated-html "Christian Meter" index-page)]
+    (fs.writeFile (path/join dist-folder "index.html") index-page)))
+
+(await (build))
 
 (comment
   (await (build))
