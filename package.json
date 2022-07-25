@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "nbb": "^0.6.129"
+  },
+  "devDependencies": {
+    "@markdoc/markdoc": "^0.1.4",
+    "zx": "^7.0.7"
+  }
+}
