@@ -10,7 +10,7 @@
             [applied-science.js-interop :as j]
             [clojure.edn :as edn]
             [clojure.string :as str]
-            [nbb.core :refer [await slurp]]
+            [nbb.core :refer [slurp]]
             [promesa.core :as p]
             [reagent.core :as r]
             [reagent.dom.server :as srv]))
@@ -20,7 +20,7 @@
 (def template (fs.readFileSync "template.html" "utf8"))
 
 (defn date->human [date]
-  (.toLocaleDateString date "en-US" #js {:year "numeric" :month "long" :day "numeric"}))
+  (.toLocaleDateString date "de-DE" #js {:year "numeric" :month "long" :day "numeric"}))
 
 (def md-to-human-date {:transform (fn [parameters] (date->human (j/get parameters 0)))})
 
@@ -186,9 +186,5 @@
           index-page (make-templated-html "Christian Meter" index-page)]
     (fs.writeFile (path/join dist-folder "index.html") index-page)
     (fs.writeFile (path/join dist-folder "rss.xml") (build-rss-feed posts))))
-
-(comment
-  (await (build))
-  nil)
 
 #js {:build build}
