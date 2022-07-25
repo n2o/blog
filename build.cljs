@@ -13,10 +13,10 @@
             [nbb.core :refer [await slurp]]
             [promesa.core :as p]
             [reagent.core :as r]
-            [reagent.dom.server :as srv]
-            rss))
+            [reagent.dom.server :as srv]))
 
-(def dist-folder "dist")
+(def site-url "https://blog.meter.ninja/")
+(def dist-folder "public")
 (def template (fs.readFileSync "template.html" "utf8"))
 
 (defn date->human [date]
@@ -61,6 +61,26 @@
                  :attributes {:content {:type 'String}
                               :highlight {:type 'String}
                               :language {:type 'String}}})
+
+;; -----------------------------------------------------------------------------
+;; RSS Feed
+
+(defn build-rss-feed [posts]
+  (str "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>
+        <rss version=\"2.0\" xmlns:atom=\"http://www.w3.org/2005/Atom\">
+         <channel>
+          <title>Christian Meter</title>
+          <description>Blog</description>
+          <link>" site-url "</link>
+       <atom:link href=\"" site-url "rss.xml\" rel=\"self\" type=\"application/rss+xml\" />"
+       (apply str (map #(str "<item>
+            <guid>" site-url (:slug %) "</guid>
+            <title>" (get-in % [:frontmatter :title]) "</title>
+            <link>" site-url (:slug %) "</link>
+            <pubDate>" (.toUTCString (get-in % [:frontmatter :published-at])) "</pubDate>
+          </item>") posts))
+       "</channel>
+</rss>"))
 
 ;; -----------------------------------------------------------------------------
 ;; Build Index Page
@@ -165,10 +185,10 @@
           index-page (srv/render-to-static-markup index-page)
           index-page (make-templated-html "Christian Meter" index-page)]
     (fs.writeFile (path/join dist-folder "index.html") index-page)
-    (fs.writeFile (path/join dist-folder "rss.xml") (rss/build-rss-feed posts))))
-
-(await (build))
+    (fs.writeFile (path/join dist-folder "rss.xml") (build-rss-feed posts))))
 
 (comment
   (await (build))
   nil)
+
+#js {:build build}

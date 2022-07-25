@@ -4,7 +4,7 @@
 .cache/
 .nrepl-port
 .lsp/
-dist/
+public/
 
 node_modules/
 yarn-debug.log*

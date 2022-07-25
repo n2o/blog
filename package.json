@@ -1,7 +1,9 @@
 {
   "scripts": {
-    "tailwind:watch": "npx tailwindcss -i ./base.css -o ./dist/output.css --watch"
+    "build": "node build.js",
+    "tailwind:watch": "npx tailwindcss -i ./base.css -o ./public/output.css --watch"
   },
+  "type": "module",
   "devDependencies": {
     "@markdoc/markdoc": "^0.1.4",
     "@sindresorhus/slugify": "^2.1.0",
