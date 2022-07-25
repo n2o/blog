@@ -1,9 +1,12 @@
 {
-  "dependencies": {
-    "nbb": "^0.6.129"
+  "scripts": {
+    "tailwind:watch": "npx tailwindcss -i ./base.css -o ./dist/output.css --watch"
   },
   "devDependencies": {
     "@markdoc/markdoc": "^0.1.4",
+    "@tailwindcss/typography": "^0.5.4",
+    "nbb": "^0.6.129",
+    "tailwindcss": "^3.1.6",
     "zx": "^7.0.7"
   }
 }
