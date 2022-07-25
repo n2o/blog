@@ -1,7 +1,9 @@
 {
   "scripts": {
-    "build": "node build.js",
-    "tailwind:watch": "npx tailwindcss -i ./base.css -o ./public/output.css --watch"
+    "build": "yarn blog:js && yarn tailwind:production",
+    "tailwind:watch": "npx tailwindcss -i ./base.css -o ./public/css/output.css --watch",
+    "tailwind:production": "npx tailwindcss -i ./base.css -o ./public/css/output.css --minify",
+    "blog:js": "node build.js"
   },
   "type": "module",
   "devDependencies": {
